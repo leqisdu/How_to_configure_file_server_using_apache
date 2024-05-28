@@ -1,0 +1,55 @@
+## all operations are verified in CENTOS 8
+1. install apache
+    dnf install -y httpd
+
+2. start httpd service and enable auto-start after boot
+    systemctl start httpd
+    systemctl enable httpd
+
+3. allow access by 80 port OR disable firewall
+    firewall-cmd --permanent --add-port=80/tcp --zone=public
+    firewall-cmd --reload
+    OR
+    systemctl disable --now firewalld
+
+4. update /etc/httpd/conf.d/welcome.conf to allow showing files&dirs
+    vi /etc/httpd/conf.d/welcome.conf to add + before 'indexes'
+      8 <LocationMatch "^/+$">
+      9     Options +Indexes
+     10     ErrorDocument 403 /.noindex.html
+     11 </LocationMatch>
+
+5. restart httpd
+    systemctl restart httpd
+
+6. update /etc/httpd/conf/httpd.conf to support Chinese
+    vi /etc/httpd/conf/httpd.conf to add
+        IndexOptions Charset=UTF-8 
+
+    and check whether the conf is correct
+    httpd -t
+
+7. update /etc/httpd/conf.d/autoindex.conf to support full file name
+    vi /etc/httpd/conf.d/autoindex.conf to add
+        IndexOptions FancyIndexing HTMLTable VersionSort NameWidth=*
+
+8. restart httpd
+    systemctl restart httpd
+
+9. how to access using user/password?
+    example as below:
+    htpasswd -bc /etc/httpd/conf.d/.passwd user1 123456
+    htpasswd -b /etc/httpd/conf.d/.passwd user2 123456
+    vi /etc/httpd/conf/httpd.conf to add below lines:
+        <Directory "/var/www/html/test">
+            Options Indexes
+            AllowOverride None
+            AuthType basic
+            AuthName "Please input name and password."
+            AuthUserFile "/etc/httpd/conf.d/.passwd"
+            Require user user1 user2
+        </Directory>
+    httpd -t
+    mkdir /var/www/html/test
+    systemctl restart httpd
+
